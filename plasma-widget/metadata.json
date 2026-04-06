@@ -15,7 +15,7 @@
         "License": "MIT",
         "Name": "To Do",
         "Version": "1.0.0",
-        "Website": "https://github.com/miradozk/todo-by-thepiou"
+        "Website": "https://github.com/GabyShamblin/kde-plasma-todo"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0",

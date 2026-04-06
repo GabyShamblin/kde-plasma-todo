@@ -134,6 +134,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **miradozk**
 
-- GitHub: [@miradozk](https://github.com/miradozk)
-- Project: [todo-by-thepiou](https://github.com/miradozk/todo-by-thepiou)
-
+- Project: [kde-plasma-todo](https://github.com/GabyShamblin/kde-plasma-todo)
+- Fork: [todo-by-thepiou](https://github.com/miradozk/todo-by-thepiou)

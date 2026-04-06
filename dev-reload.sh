@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Script de développement : réinstalle et recharge Plasma
+# Development script : Reinstall and restart Plasma
 
 WIDGET_NAME="thepiou.plasma.todo"
 WIDGET_DIR="plasma-widget"
 
-echo "🔄 Mise à jour du widget..."
+echo "🔄 Updating the widget widget..."
 
 # Désinstaller
 kpackagetool6 --type=Plasma/Applet --remove="$WIDGET_NAME" &> /dev/null
@@ -14,16 +14,16 @@ kpackagetool6 --type=Plasma/Applet --remove="$WIDGET_NAME" &> /dev/null
 kpackagetool6 --type=Plasma/Applet --install "$WIDGET_DIR"
 
 if [ $? -eq 0 ]; then
-    echo "✅ Widget réinstallé"
-    echo "🔄 Redémarrage de Plasma..."
+    echo "✅ Widget reinstalled"
+    echo "🔄 Restarting Plasma..."
 
     # Redémarrer plasmashell
     killall plasmashell
     sleep 2
     plasmashell &> /dev/null &
 
-    echo "✅ Terminé ! Le widget a été mis à jour."
+    echo "✅ Done ! Widget has been updated."
 else
-    echo "❌ Erreur lors de la réinstallation"
+    echo "❌ Error while reinstalling"
     exit 1
 fi

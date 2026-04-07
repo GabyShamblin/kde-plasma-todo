@@ -2,7 +2,7 @@
 
 # Script to install Widget Plasma To Do
 
-WIDGET_NAME="thepiou.plasma.todo"
+WIDGET_NAME="kde.plasma.todo"
 WIDGET_DIR="plasma-widget"
 
 echo "==================================="
@@ -26,13 +26,13 @@ fi
 # Uninstall the widget if it already exists
 echo "🔍 Verifying..."
 if kpackagetool6 --type=Plasma/Applet --show="$WIDGET_NAME" &> /dev/null; then
-    echo "⚠️  Widget already installed, uninstalling..."
-    kpackagetool6 --type=Plasma/Applet --remove="$WIDGET_NAME"
+    echo "📦 Widget already installed, updating..."
+    kpackagetool6 --type=Plasma/Applet --upgrade="$WIDGET_DIR"
+else
+    # Install the widget
+    echo "📦 Installing..."
+    kpackagetool6 --type=Plasma/Applet --install "$WIDGET_DIR"
 fi
-
-# Install the widget
-echo "📦 Installing..."
-kpackagetool6 --type=Plasma/Applet --install "$WIDGET_DIR"
 
 if [ $? -eq 0 ]; then
     echo ""

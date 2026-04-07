@@ -11,49 +11,49 @@ var nextId = 1
 var db = null
 
 function getDatabase() {
-    if (db === null) {
-        db = LS.LocalStorage.openDatabaseSync(DB_NAME, DB_VERSION, DB_DESCRIPTION, DB_SIZE)
+	if (db === null) {
+		db = LS.LocalStorage.openDatabaseSync(DB_NAME, DB_VERSION, DB_DESCRIPTION, DB_SIZE)
 
-        db.transaction(function(tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS todos(id INTEGER PRIMARY KEY, title TEXT, completed INTEGER, created_at TEXT)')
-        })
-    }
-    return db
+		db.transaction(function(tx) {
+			tx.executeSql('CREATE TABLE IF NOT EXISTS todos(id INTEGER PRIMARY KEY, title TEXT, completed INTEGER, created_at TEXT)')
+		})
+	}
+	return db
 }
 
 function initDatabase(plasmoid) {
-    getDatabase()
-    const todos = getAllTodos(plasmoid)
-    if (todos.length > 0) {
-        // Find the highest ID
-        var maxId = 0
-        for (var i = 0; i < todos.length; i++) {
-            if (todos[i].id > maxId) {
-                maxId = todos[i].id
-            }
-        }
-        nextId = maxId + 1
-    }
+	getDatabase()
+	const todos = getAllTodos(plasmoid)
+	if (todos.length > 0) {
+		// Find the highest ID
+		var maxId = 0
+		for (var i = 0; i < todos.length; i++) {
+			if (todos[i].id > maxId) {
+				maxId = todos[i].id
+			}
+		}
+		nextId = maxId + 1
+	}
 }
 
 function getAllTodos(plasmoid) {
-    var todos = []
-    var database = getDatabase()
+	var todos = []
+	var database = getDatabase()
 
-    database.readTransaction(function(tx) {
-        var rs = tx.executeSql('SELECT * FROM todos ORDER BY completed ASC, created_at DESC')
-        for (var i = 0; i < rs.rows.length; i++) {
-            var row = rs.rows.item(i)
-            todos.push({
-                id: row.id,
-                title: row.title,
-                completed: row.completed === 1,
-                created_at: row.created_at
-            })
-        }
-    })
+	database.readTransaction(function(tx) {
+		var rs = tx.executeSql('SELECT * FROM todos ORDER BY completed ASC, created_at DESC')
+		for (var i = 0; i < rs.rows.length; i++) {
+			var row = rs.rows.item(i)
+			todos.push({
+				id: row.id,
+				title: row.title,
+				completed: row.completed === 1,
+				created_at: row.created_at
+			})
+		}
+	})
 
-    return todos
+	return todos
 }
 
 function saveTodos(plasmoid, todos) {
@@ -61,89 +61,101 @@ function saveTodos(plasmoid, todos) {
 }
 
 function addTodo(plasmoid, title) {
-    var database = getDatabase()
-    var todoId = nextId++
+	var database = getDatabase()
+	var todoId = nextId++
 
-    database.transaction(function(tx) {
-        tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
-                     [todoId, title, 0, new Date().toISOString()])
-    })
+	database.transaction(function(tx) {
+		tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
+		              [todoId, title, 0, new Date().toISOString()])
+	})
 
-    return todoId
+	return todoId
+}
+
+function addTodo(plasmoid, title, date) {
+	var database = getDatabase()
+	var todoId = nextId++
+
+	database.transaction(function(tx) {
+		tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
+		              [todoId, title, 0, date.toISOString()])
+	})
+
+	return todoId
 }
 
 function toggleTodo(plasmoid, id) {
-    var database = getDatabase()
+	var database = getDatabase()
 
-    database.transaction(function(tx) {
-        tx.executeSql('UPDATE todos SET completed = NOT completed WHERE id = ?', [id])
-    })
+	database.transaction(function(tx) {
+		tx.executeSql('UPDATE todos SET completed = NOT completed WHERE id = ?', [id])
+	})
 
-    return true
+	return true
 }
 
 function deleteTodo(plasmoid, id) {
-    var database = getDatabase()
+	var database = getDatabase()
 
-    database.transaction(function(tx) {
-        tx.executeSql('DELETE FROM todos WHERE id = ?', [id])
-    })
+	database.transaction(function(tx) {
+		tx.executeSql('DELETE FROM todos WHERE id = ?', [id])
+	})
 
-    return true
+	return true
 }
 
 function clearAll(plasmoid) {
-    var database = getDatabase()
+	var database = getDatabase()
 
-    database.transaction(function(tx) {
-        tx.executeSql('DELETE FROM todos')
-    })
+	database.transaction(function(tx) {
+		tx.executeSql('DELETE FROM todos')
+	})
 }
 
 function loadSampleData(plasmoid) {
-    clearAll(plasmoid)
+	clearAll(plasmoid)
 
-    var database = getDatabase()
-    const now = new Date()
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
+	var database = getDatabase()
+	const now = new Date()
+	const yesterday = new Date(now)
+	yesterday.setDate(yesterday.getDate() - 1)
 
-    const twoDaysAgo = new Date(now)
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+	const twoDaysAgo = new Date(now)
+	twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
 
-    const lastWeek = new Date(now)
-    lastWeek.setDate(lastWeek.getDate() - 7)
+	const lastWeek = new Date(now)
+	lastWeek.setDate(lastWeek.getDate() - 7)
 
-    const sampleTodos = [
-        // Today
-        { title: "Buy bread", completed: 0, created_at: now.toISOString() },
-        { title: "Call the dentist", completed: 0, created_at: now.toISOString() },
-        { title: "Finish the report", completed: 1, created_at: now.toISOString() },
-        { title: "Reply to emails", completed: 0, created_at: now.toISOString() },
-        { title: "Visit https://github.com/thepiou", completed: 0, created_at: now.toISOString() },
+	const sampleTodos = [
+		// Today
+		{ title: "Buy bread", completed: 0, created_at: now.toISOString() },
+		{ title: "Call the dentist", completed: 0, created_at: now.toISOString() },
+		{ title: "Finish the report", completed: 1, created_at: now.toISOString() },
+		{ title: "Reply to emails", completed: 0, created_at: now.toISOString() },
+		{ title: "Visit https://github.com/thepiou", completed: 0, created_at: now.toISOString() },
 
-        // Yesterday
-        { title: "Shopping", completed: 1, created_at: yesterday.toISOString() },
-        { title: "Pay the bills", completed: 1, created_at: yesterday.toISOString() },
-        { title: "Clean the kitchen", completed: 0, created_at: yesterday.toISOString() },
+		// Yesterday
+		{ title: "Shopping", completed: 1, created_at: yesterday.toISOString() },
+		{ title: "Pay the bills", completed: 1, created_at: yesterday.toISOString() },
+		{ title: "Clean the kitchen", completed: 0, created_at: yesterday.toISOString() },
 
-        // 2 days ago
-        { title: "Work meeting", completed: 1, created_at: twoDaysAgo.toISOString() },
-        { title: "Prepare presentation", completed: 1, created_at: twoDaysAgo.toISOString() },
-        { title: "Review the budget", completed: 0, created_at: twoDaysAgo.toISOString() },
+		// 2 days ago
+		{ title: "Work meeting", completed: 1, created_at: twoDaysAgo.toISOString() },
+		{ title: "Prepare presentation", completed: 1, created_at: twoDaysAgo.toISOString() },
+		{ title: "Review the budget", completed: 0, created_at: twoDaysAgo.toISOString() },
 
-        // Last week
-        { title: "Doctors appointment", completed: 1, created_at: lastWeek.toISOString() },
-        { title: "Buy birthday gift", completed: 1, created_at: lastWeek.toISOString() },
-        { title: "Repair bike", completed: 0, created_at: lastWeek.toISOString() }
-    ]
+		// Last week
+		{ title: "Doctors appointment", completed: 1, created_at: lastWeek.toISOString() },
+		{ title: "Buy birthday gift", completed: 1, created_at: lastWeek.toISOString() },
+		{ title: "Repair bike", completed: 0, created_at: lastWeek.toISOString() }
+	]
 
-    database.transaction(function(tx) {
-        for (var i = 0; i < sampleTodos.length; i++) {
-            tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
-                         [i + 1, sampleTodos[i].title, sampleTodos[i].completed, sampleTodos[i].created_at])
-        }
-    })
+	database.transaction(function(tx) {
+		for (var i = 0; i < sampleTodos.length; i++) {
+			tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
+			              [i + 1, sampleTodos[i].title, sampleTodos[i].completed, sampleTodos[i].created_at])
+		}
+	})
 
-    nextId = sampleTodos.length + 1
+	nextId = sampleTodos.length + 1
 }

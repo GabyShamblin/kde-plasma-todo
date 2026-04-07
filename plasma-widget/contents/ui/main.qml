@@ -5,379 +5,425 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
+import org.kde.kirigamiaddons.dateandtime as KirigamiDateTime
 import "storage.js" as Storage
 
 PlasmoidItem {
-    id: root
+	id: root
 
-    width: Kirigami.Units.gridUnit * 25
-    height: Kirigami.Units.gridUnit * 35
+	width: Kirigami.Units.gridUnit * 25
+	height: Kirigami.Units.gridUnit * 35
 
-    preferredRepresentation: compactRepresentation
+	preferredRepresentation: compactRepresentation
 
-    property var todos: []
-    property string currentFilter: "all" // all, active, completed
+	property var todos: []
+	property string currentFilter: "all" // all, active, completed
 
-    Component.onCompleted: {
-        Storage.initDatabase(plasmoid)
-        loadTodos()
-    }
+	Component.onCompleted: {
+		Storage.initDatabase(plasmoid)
+		loadTodos()
+	}
 
-    // Auto-refresh every second to sync between instances
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: root.loadTodos()
-    }
+	// Auto-refresh every second to sync between instances
+	Timer {
+		interval: 1000
+		running: true
+		repeat: true
+		onTriggered: root.loadTodos()
+	}
 
-    function loadTodos() {
-        todos = Storage.getAllTodos(plasmoid)
-    }
+	function loadTodos() {
+		todos = Storage.getAllTodos(plasmoid)
+	}
 
-    function addTodo(text) {
-        if (text.trim() === "") return
-        Storage.addTodo(plasmoid, text)
-        loadTodos()
-    }
+	// function addTodo(text) {
+	// 	if (text.trim() === "") return
+	// 	Storage.addTodo(plasmoid, text)
+	// 	loadTodos()
+	// }
 
-    function toggleTodo(id) {
-        Storage.toggleTodo(plasmoid, id)
-        loadTodos()
-    }
+	function addTodo(text, date) {
+		if (text.trim() === "") return
+		Storage.addTodo(plasmoid, text, date)
+		loadTodos()
+	}
 
-    function deleteTodo(id) {
-        Storage.deleteTodo(plasmoid, id)
-        loadTodos()
-    }
+	function toggleTodo(id) {
+		Storage.toggleTodo(plasmoid, id)
+		loadTodos()
+	}
 
-    function clearAllTodos() {
-        Storage.clearAll(plasmoid)
-        loadTodos()
-    }
+	function deleteTodo(id) {
+		Storage.deleteTodo(plasmoid, id)
+		loadTodos()
+	}
 
-    function loadSampleData() {
-        Storage.loadSampleData(plasmoid)
-        loadTodos()
-    }
+	function clearAllTodos() {
+		Storage.clearAll(plasmoid)
+		loadTodos()
+	}
 
-    function getDateLabel(dateString) {
-        const todoDate = new Date(dateString)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+	function loadSampleData() {
+		Storage.loadSampleData(plasmoid)
+		loadTodos()
+	}
 
-        const yesterday = new Date(today)
-        yesterday.setDate(yesterday.getDate() - 1)
+	// Create the date label for todo date categories
+	function getDateLabel(dateString) {
+		const todoDate = new Date(dateString)
+		const today = new Date()
+		today.setHours(0, 0, 0, 0)
 
-        const todoDateOnly = new Date(todoDate)
-        todoDateOnly.setHours(0, 0, 0, 0)
+		const yesterday = new Date(today)
+		yesterday.setDate(yesterday.getDate() - 1)
 
-        const diffDays = Math.floor((today - todoDateOnly) / (1000 * 60 * 60 * 24))
+		const todoDateOnly = new Date(todoDate)
+		todoDateOnly.setHours(0, 0, 0, 0)
 
-        if (diffDays === 0) return "Today"
-        if (diffDays === 1) return "Tomorrow"
-        if (diffDays < 7) {
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-            return days[todoDate.getDay()]
-        }
+		const diffDays = Math.floor((todoDateOnly - today) / (1000 * 60 * 60 * 24))
 
-        const months = ["January", "February", "March", "April", "May", "June",
-                       "July", "August", "September", "October", "November", "December"]
-        return todoDate.getDate() + " " + months[todoDate.getMonth()]
-    }
+		const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+										"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-    function getFilteredTodos() {
-        var filtered = []
-        for (var i = 0; i < todos.length; i++) {
-            var todo = todos[i]
-            if (currentFilter === "all") {
-                filtered.push(todo)
-            } else if (currentFilter === "active" && !todo.completed) {
-                filtered.push(todo)
-            } else if (currentFilter === "completed" && todo.completed) {
-                filtered.push(todo)
-            }
-        }
-        return filtered
-    }
+		if (diffDays === 0) return "Today"
+		if (diffDays === 1) return "Tomorrow"
+		if (todoDate.getYear() != today.getYear()) {
+			return months[todoDate.getMonth()] + " " + todoDate.getDate() + ", " + todoDate.getFullYear()
+		}
+		if (diffDays < 7) {
+			const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+			return days[todoDate.getDay()] + ", " + months[todoDate.getMonth()] + " " + todoDate.getDate()
+		}
 
-    function getTodoCount(filter) {
-        var count = 0
-        for (var i = 0; i < todos.length; i++) {
-            if (filter === "all") {
-                count++
-            } else if (filter === "active" && !todos[i].completed) {
-                count++
-            } else if (filter === "completed" && todos[i].completed) {
-                count++
-            }
-        }
-        return count
-    }
+		return months[todoDate.getMonth()] + " " + todoDate.getDate()
+	}
 
-    function groupTodosByDate() {
-        const groups = {}
-        const filtered = getFilteredTodos()
+	function getFilteredTodos() {
+		var filtered = []
+		for (var i = 0; i < todos.length; i++) {
+			var todo = todos[i]
+			if (currentFilter === "all") {
+				filtered.push(todo)
+			} else if (currentFilter === "active" && !todo.completed) {
+				filtered.push(todo)
+			} else if (currentFilter === "completed" && todo.completed) {
+				filtered.push(todo)
+			}
+		}
+		return filtered
+	}
 
-        for (let i = 0; i < filtered.length; i++) {
-            const todo = filtered[i]
-            const dateLabel = getDateLabel(todo.created_at)
+	function getTodoCount(filter) {
+		var count = 0
+		for (var i = 0; i < todos.length; i++) {
+			if (filter === "all") {
+				count++
+			} else if (filter === "active" && !todos[i].completed) {
+				count++
+			} else if (filter === "completed" && todos[i].completed) {
+				count++
+			}
+		}
+		return count
+	}
 
-            if (!groups[dateLabel]) {
-                groups[dateLabel] = []
-            }
-            groups[dateLabel].push(todo)
-        }
+	function groupTodosByDate() {
+		const groups = {}
+		const filtered = getFilteredTodos()
 
-        return groups
-    }
+		for (let i = 0; i < filtered.length; i++) {
+			const todo = filtered[i]
+			const dateLabel = getDateLabel(todo.created_at)
 
-    // Compact representation (for panel)
-    compactRepresentation: Item {
-        Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-        Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+			if (!groups[dateLabel]) {
+				groups[dateLabel] = []
+			}
+			groups[dateLabel].push(todo)
+		}
 
-        Kirigami.Icon {
-            id: icon
-            anchors.fill: parent
-            source: "view-list-details"
-            active: mouseArea.containsMouse
+		return groups
+	}
 
-            // Badge showing number of incomplete todos
-            Rectangle {
-                visible: {
-                    var incomplete = 0
-                    for (var i = 0; i < root.todos.length; i++) {
-                        if (!root.todos[i].completed) incomplete++
-                    }
-                    return incomplete > 0
-                }
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.rightMargin: -4
-                anchors.topMargin: -4
-                width: Math.max(16, badgeText.width + 6)
-                height: 16
-                radius: 8
-                color: Kirigami.Theme.highlightColor
+	// Compact representation (for panel)
+	compactRepresentation: Item {
+			Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+			Layout.preferredHeight: Kirigami.Units.iconSizes.medium
 
-                QQC2.Label {
-                    id: badgeText
-                    anchors.centerIn: parent
-                    text: {
-                        var incomplete = 0
-                        for (var i = 0; i < root.todos.length; i++) {
-                            if (!root.todos[i].completed) incomplete++
-                        }
-                        return incomplete > 99 ? "99+" : incomplete.toString()
-                    }
-                    color: "white"
-                    font.pixelSize: 10
-                    font.bold: true
-                }
-            }
-        }
+			Kirigami.Icon {
+					id: icon
+					anchors.fill: parent
+					source: "view-list-details"
+					active: mouseArea.containsMouse
 
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: root.expanded = !root.expanded
-        }
-    }
+					// Badge showing number of incomplete todos
+					Rectangle {
+							visible: {
+									var incomplete = 0
+									for (var i = 0; i < root.todos.length; i++) {
+											if (!root.todos[i].completed) incomplete++
+									}
+									return incomplete > 0
+							}
+							anchors.right: parent.right
+							anchors.top: parent.top
+							anchors.rightMargin: -4
+							anchors.topMargin: -4
+							width: Math.max(16, badgeText.width + 6)
+							height: 16
+							radius: 8
+							color: Kirigami.Theme.highlightColor
 
-    fullRepresentation: ColumnLayout {
-        Layout.minimumWidth: Kirigami.Units.gridUnit * 20
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 25
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 25
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 35
-        spacing: 0
+							QQC2.Label {
+									id: badgeText
+									anchors.centerIn: parent
+									text: {
+											var incomplete = 0
+											for (var i = 0; i < root.todos.length; i++) {
+													if (!root.todos[i].completed) incomplete++
+											}
+											return incomplete > 99 ? "99+" : incomplete.toString()
+									}
+									color: "white"
+									font.pixelSize: 10
+									font.bold: true
+							}
+					}
+			}
 
-        // Header
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Kirigami.Units.gridUnit * 7
-            color: Kirigami.Theme.backgroundColor
+			MouseArea {
+					id: mouseArea
+					anchors.fill: parent
+					hoverEnabled: true
+					onClicked: root.expanded = !root.expanded
+			}
+	}
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: Kirigami.Units.largeSpacing
-                spacing: Kirigami.Units.smallSpacing
+	fullRepresentation: ColumnLayout {
+		Layout.minimumWidth: Kirigami.Units.gridUnit * 20
+		Layout.minimumHeight: Kirigami.Units.gridUnit * 25
+		Layout.preferredWidth: Kirigami.Units.gridUnit * 25
+		Layout.preferredHeight: Kirigami.Units.gridUnit * 35
+		spacing: 0
 
-                // Input field with Add button
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
+		// Header
+		Rectangle {
+			Layout.fillWidth: true
+			Layout.preferredHeight: Kirigami.Units.gridUnit * 7
+			color: Kirigami.Theme.backgroundColor
 
-                    QQC2.TextField {
-                        id: inputField
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
-                        placeholderText: "Add a task..."
-                        leftPadding: Kirigami.Units.largeSpacing
-                        rightPadding: Kirigami.Units.largeSpacing
+			ColumnLayout {
+				anchors.fill: parent
+				anchors.margins: Kirigami.Units.largeSpacing
+				spacing: Kirigami.Units.smallSpacing
 
-                        Keys.onReturnPressed: {
-                            root.addTodo(text)
-                            text = ""
-                        }
-                    }
+				// Input field with Add button
+				RowLayout {
+					Layout.fillWidth: true
+					spacing: Kirigami.Units.smallSpacing
 
-                    QQC2.Button {
-                        Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
-                        text: "Add"
-                        icon.name: "list-add"
-                        highlighted: true
-                        leftPadding: Kirigami.Units.largeSpacing * 1.5
-                        rightPadding: Kirigami.Units.largeSpacing * 1.5
-                        onClicked: {
-                            root.addTodo(inputField.text)
-                            inputField.text = ""
-                        }
-                    }
-                }
+					QQC2.TextField {
+						id: inputField
+						Layout.fillWidth: true
+						Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
+						placeholderText: "New task..."
+						leftPadding: Kirigami.Units.largeSpacing
+						rightPadding: Kirigami.Units.largeSpacing
 
-                // Filters
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
+						Keys.onReturnPressed: {
+							root.addTodo(text)
+							text = ""
+						}
+					}
 
-                    QQC2.Button {
-                        text: "All " + root.getTodoCount("all")
-                        checkable: true
-                        checked: root.currentFilter === "all"
-                        flat: !checked
-                        onClicked: root.currentFilter = "all"
-                    }
+					// Due date calendar
+					QQC2.Button {
+						id: calendarButton
+						Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
+						text: Qt.formatDate(selectedDate,"MMM d")
+						icon.name: "view-calendar"
+						leftPadding: Kirigami.Units.largeSpacing * 1.5
+						rightPadding: Kirigami.Units.largeSpacing * 1.5
 
-                    QQC2.Button {
-                        text: "Active " + root.getTodoCount("active")
-                        checkable: true
-                        checked: root.currentFilter === "active"
-                        flat: !checked
-                        onClicked: root.currentFilter = "active"
-                    }
+						property date selectedDate: new Date()
+						onClicked: calendarPopup.open()
 
-                    QQC2.Button {
-                        text: "Completed " + root.getTodoCount("completed")
-                        checkable: true
-                        checked: root.currentFilter === "completed"
-                        flat: !checked
-                        onClicked: root.currentFilter = "completed"
-                    }
+						QQC2.Popup {
+							id: calendarPopup
+							x: calendarButton.width - width
+							y: calendarButton.height + Kirigami.Units.smallSpacing
+							width: Kirigami.Units.gridUnit * 20
+							height: Kirigami.Units.gridUnit * 20
+							modal: true
+							focus: true
+							closePolicy: QQC2.Popup.CloseOnEscape | QQC2.Popup.CloseOnPressOutside
+							padding: Kirigami.Units.smallSpacing
 
-                    Item { Layout.fillWidth: true }
-                }
-            }
-        }
+							KirigamiDateTime.DatePicker {
+								id: datePicker
+								anchors.fill: parent
+								onDatePicked: (date) => {
+									calendarButton.selectedDate = date
+									calendarPopup.close()
+								}
+							}
+						}
+					}
 
-        // Separator
-        Kirigami.Separator {
-            Layout.fillWidth: true
-        }
+					QQC2.Button {
+						Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
+						text: "Add"
+						icon.name: "list-add"
+						highlighted: true
+						leftPadding: Kirigami.Units.largeSpacing * 1.5
+						rightPadding: Kirigami.Units.largeSpacing * 1.5
+						onClicked: {
+							root.addTodo(inputField.text, calendarButton.selectedDate)
+							inputField.text = ""
+						}
+					}
+				}
 
-        // Todo list
-        QQC2.ScrollView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+				// Filters
+				RowLayout {
+					Layout.fillWidth: true
+					spacing: Kirigami.Units.smallSpacing
 
-            ListView {
-                id: todoListView
-                clip: true
-                spacing: 0
+					QQC2.Button {
+						text: "All " + root.getTodoCount("all")
+						checkable: true
+						checked: root.currentFilter === "all"
+						flat: !checked
+						onClicked: root.currentFilter = "all"
+					}
 
-                model: {
-                    const groups = root.groupTodosByDate()
-                    const items = []
+					QQC2.Button {
+						text: "Active " + root.getTodoCount("active")
+						checkable: true
+						checked: root.currentFilter === "active"
+						flat: !checked
+						onClicked: root.currentFilter = "active"
+					}
 
-                    for (const dateLabel in groups) {
-                        items.push({ type: "header", text: dateLabel })
+					QQC2.Button {
+						text: "Completed " + root.getTodoCount("completed")
+						checkable: true
+						checked: root.currentFilter === "completed"
+						flat: !checked
+						onClicked: root.currentFilter = "completed"
+					}
 
-                        const todosInGroup = groups[dateLabel]
-                        for (let i = 0; i < todosInGroup.length; i++) {
-                            items.push({ type: "todo", data: todosInGroup[i] })
-                        }
-                    }
+					Item { Layout.fillWidth: true }
+				}
+			}
+		}
 
-                    return items
-                }
+		// Separator
+		Kirigami.Separator {
+				Layout.fillWidth: true
+		}
 
-                delegate: Loader {
-                    width: todoListView.width
-                    sourceComponent: modelData.type === "header" ? headerComponent : todoComponent
+		// Todo list
+		QQC2.ScrollView {
+			Layout.fillWidth: true
+			Layout.fillHeight: true
 
-                    property var itemData: modelData
-                }
-            }
-        }
-    }
+			ListView {
+				id: todoListView
+				clip: true
+				spacing: 0
 
-    Component {
-        id: headerComponent
+				model: {
+					const groups = root.groupTodosByDate()
+					const items = []
 
-        Item {
-            height: Kirigami.Units.gridUnit * 2
+					for (const dateLabel in groups) {
+						items.push({ type: "header", text: dateLabel })
 
-            Kirigami.Heading {
-                level: 4
-                text: itemData.text
-                color: Kirigami.Theme.disabledTextColor
-                anchors.left: parent.left
-                anchors.leftMargin: Kirigami.Units.largeSpacing
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-    }
+						const todosInGroup = groups[dateLabel]
+						for (let i = 0; i < todosInGroup.length; i++) {
+							items.push({ type: "todo", data: todosInGroup[i] })
+						}
+					}
 
-    Component {
-        id: todoComponent
+					return items
+				}
 
-        PlasmaComponents.ItemDelegate {
-            height: Kirigami.Units.gridUnit * 3
-            width: ListView.view.width
+				delegate: Loader {
+					width: todoListView.width
+					sourceComponent: modelData.type === "header" ? headerComponent : todoComponent
 
-            contentItem: RowLayout {
-                spacing: Kirigami.Units.largeSpacing
+					property var itemData: modelData
+				}
+			}
+		}
+	}
 
-                // Checkbox using system colors
-                QQC2.CheckBox {
-                    Layout.alignment: Qt.AlignVCenter
-                    checked: itemData.data.completed
-                    onClicked: root.toggleTodo(itemData.data.id)
-                }
+	Component {
+		id: headerComponent
 
-                // Todo text with URL support
-                QQC2.Label {
-                    Layout.fillWidth: true
-                    text: {
-                        var title = itemData.data.title
-                        // Convert URLs to clickable links
-                        var urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim
-                        return title.replace(urlPattern, '<a href="$1">$1</a>')
-                    }
-                    textFormat: Text.RichText
-                    wrapMode: Text.Wrap
-                    font.strikeout: itemData.data.completed
-                    color: itemData.data.completed ? Kirigami.Theme.disabledTextColor : Kirigami.Theme.textColor
-                    onLinkActivated: function(link) {
-                        Qt.openUrlExternally(link)
-                    }
+		Item {
+			height: Kirigami.Units.gridUnit * 2
 
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.NoButton
-                        cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    }
-                }
+			Kirigami.Heading {
+				level: 4
+				text: itemData.text
+				color: Kirigami.Theme.disabledTextColor
+				anchors.left: parent.left
+				anchors.leftMargin: Kirigami.Units.largeSpacing
+				anchors.verticalCenter: parent.verticalCenter
+			}
+		}
+	}
 
-                // Delete button
-                PlasmaComponents.ToolButton {
-                    icon.name: "edit-delete"
-                    icon.width: Kirigami.Units.iconSizes.small
-                    icon.height: Kirigami.Units.iconSizes.small
-                    onClicked: root.deleteTodo(itemData.data.id)
-                }
-            }
-        }
-    }
+	Component {
+		id: todoComponent
+
+		PlasmaComponents.ItemDelegate {
+			height: Kirigami.Units.gridUnit * 3
+			width: ListView.view.width
+
+			contentItem: RowLayout {
+				spacing: Kirigami.Units.largeSpacing
+
+				// Checkbox using system colors
+				QQC2.CheckBox {
+					Layout.alignment: Qt.AlignVCenter
+					checked: itemData.data.completed
+					onClicked: root.toggleTodo(itemData.data.id)
+				}
+
+				// Todo text with URL support
+				QQC2.Label {
+					Layout.fillWidth: true
+					text: {
+						var title = itemData.data.title
+						// Convert URLs to clickable links
+						var urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim
+						return title.replace(urlPattern, '<a href="$1">$1</a>')
+					}
+					textFormat: Text.RichText
+					wrapMode: Text.Wrap
+					font.strikeout: itemData.data.completed
+					color: itemData.data.completed ? Kirigami.Theme.disabledTextColor : Kirigami.Theme.textColor
+					onLinkActivated: function(link) {
+						Qt.openUrlExternally(link)
+					}
+
+					MouseArea {
+						anchors.fill: parent
+						acceptedButtons: Qt.NoButton
+						cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+					}
+				}
+
+				// Delete button
+				PlasmaComponents.ToolButton {
+					icon.name: "edit-delete"
+					icon.width: Kirigami.Units.iconSizes.small
+					icon.height: Kirigami.Units.iconSizes.small
+					onClicked: root.deleteTodo(itemData.data.id)
+				}
+			}
+		}
+	}
 }

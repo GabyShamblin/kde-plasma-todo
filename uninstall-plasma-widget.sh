@@ -2,10 +2,10 @@
 
 # Script to uninstall Widget Plasma To Do
 
-WIDGET_NAME="thepiou.plasma.todo"
+WIDGET_NAME="kde.plasma.todo"
 
 echo "==================================="
-echo "Uninstall Widget To Do"
+echo "Uninstall To Do Widget"
 echo "==================================="
 echo ""
 

@@ -53,6 +53,11 @@ PlasmoidItem {
 		loadTodos()
 	}
 
+	function editTodo(id, title, date) {
+		Storage.editTodo(plasmoid, id, title, date)
+		loadTodos()
+	}
+
 	function deleteTodo(id) {
 		Storage.deleteTodo(plasmoid, id)
 		loadTodos()
@@ -133,7 +138,7 @@ PlasmoidItem {
 
 		for (let i = 0; i < filtered.length; i++) {
 			const todo = filtered[i]
-			const dateLabel = getDateLabel(todo.created_at)
+			const dateLabel = getDateLabel(todo.due_date)
 
 			if (!groups[dateLabel]) {
 				groups[dateLabel] = []
@@ -241,8 +246,8 @@ PlasmoidItem {
 						Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
 						text: Qt.formatDate(selectedDate,"MMM d")
 						icon.name: "view-calendar"
-						leftPadding: Kirigami.Units.largeSpacing * 1.5
-						rightPadding: Kirigami.Units.largeSpacing * 1.5
+						leftPadding: Kirigami.Units.largeSpacing
+						rightPadding: Kirigami.Units.largeSpacing
 
 						property date selectedDate: new Date()
 						onClicked: calendarPopup.open()
@@ -274,8 +279,8 @@ PlasmoidItem {
 						text: "Add"
 						icon.name: "list-add"
 						highlighted: true
-						leftPadding: Kirigami.Units.largeSpacing * 1.5
-						rightPadding: Kirigami.Units.largeSpacing * 1.5
+						leftPadding: Kirigami.Units.largeSpacing
+						rightPadding: Kirigami.Units.largeSpacing
 						onClicked: {
 							root.addTodo(inputField.text, calendarButton.selectedDate)
 							inputField.text = ""
@@ -380,7 +385,9 @@ PlasmoidItem {
 
 		PlasmaComponents.ItemDelegate {
 			height: Kirigami.Units.gridUnit * 3
-			width: ListView.view.width
+			// width: ListView.view.width
+
+			property bool editing: false
 
 			contentItem: RowLayout {
 				spacing: Kirigami.Units.largeSpacing
@@ -389,12 +396,16 @@ PlasmoidItem {
 				QQC2.CheckBox {
 					Layout.alignment: Qt.AlignVCenter
 					checked: itemData.data.completed
+					visible: !parent.parent.editing
 					onClicked: root.toggleTodo(itemData.data.id)
 				}
+
+				// --- View mode ---
 
 				// Todo text with URL support
 				QQC2.Label {
 					Layout.fillWidth: true
+					visible: !parent.parent.editing
 					text: {
 						var title = itemData.data.title
 						// Convert URLs to clickable links
@@ -416,12 +427,77 @@ PlasmoidItem {
 					}
 				}
 
-				// Delete button
+				// --- Edit mode ---
+
+				QQC2.TextField {
+					id: editField
+					Layout.fillWidth: true
+					visible: parent.parent.editing
+					text: itemData.data.title
+				}
+
+				QQC2.Button {
+					id: calendarEditButton
+					Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
+					visible: parent.parent.editing
+					text: Qt.formatDate(selectedDate,"MMM d")
+					icon.name: "view-calendar"
+					leftPadding: Kirigami.Units.smallSpacing
+					rightPadding: Kirigami.Units.smallSpacing
+
+					property date selectedDate: itemData.data.due_date
+					onClicked: calendarPopup.open()
+
+					QQC2.Popup {
+						id: calendarPopup
+						x: calendarEditButton.width - width
+						y: calendarEditButton.height + Kirigami.Units.smallSpacing
+						width: Kirigami.Units.gridUnit * 20
+						height: Kirigami.Units.gridUnit * 20
+						modal: true
+						focus: true
+						closePolicy: QQC2.Popup.CloseOnEscape | QQC2.Popup.CloseOnPressOutside
+						padding: Kirigami.Units.smallSpacing
+
+						KirigamiDateTime.DatePicker {
+							id: datePicker
+							anchors.fill: parent
+							onDatePicked: (date) => {
+								calendarEditButton.selectedDate = date
+								calendarPopup.close()
+							}
+						}
+					}
+				}
+
+				// Edit / confirm button
 				PlasmaComponents.ToolButton {
-					icon.name: "edit-delete"
+					icon.name: parent.parent.editing ? "dialog-ok" : "edit-entry"
 					icon.width: Kirigami.Units.iconSizes.small
 					icon.height: Kirigami.Units.iconSizes.small
-					onClicked: root.deleteTodo(itemData.data.id)
+					onClicked: {
+						if (parent.parent.editing) {
+							root.editTodo(itemData.data.id, editField.text, calendarEditButton.selectedDate)
+							parent.parent.editing = false
+						} else {
+							editField.text - itemData.data.title
+							parent.parent.editing = true
+						}
+					}
+				}
+
+				// Delete / cancel button
+				PlasmaComponents.ToolButton {
+					icon.name: parent.parent.editing ? "dialog-cancel" : "edit-delete"
+					icon.width: Kirigami.Units.iconSizes.small
+					icon.height: Kirigami.Units.iconSizes.small
+					onClicked: {
+						if (parent.parent.editing) {
+							parent.parent.editing = false
+						} else {
+							root.deleteTodo(itemData.data.id)
+						}
+					}
 				}
 			}
 		}

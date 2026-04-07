@@ -15,9 +15,10 @@ function getDatabase() {
 		db = LS.LocalStorage.openDatabaseSync(DB_NAME, DB_VERSION, DB_DESCRIPTION, DB_SIZE)
 
 		db.transaction(function(tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS todos(id INTEGER PRIMARY KEY, title TEXT, completed INTEGER, created_at TEXT)')
+			tx.executeSql('CREATE TABLE IF NOT EXISTS todos(id INTEGER PRIMARY KEY, title TEXT, completed INTEGER, due_date TEXT)')
 		})
 	}
+
 	return db
 }
 
@@ -41,14 +42,14 @@ function getAllTodos(plasmoid) {
 	var database = getDatabase()
 
 	database.readTransaction(function(tx) {
-		var rs = tx.executeSql('SELECT * FROM todos ORDER BY completed ASC, created_at DESC')
+		var rs = tx.executeSql('SELECT * FROM todos ORDER BY completed ASC, due_date DESC')
 		for (var i = 0; i < rs.rows.length; i++) {
 			var row = rs.rows.item(i)
 			todos.push({
 				id: row.id,
 				title: row.title,
 				completed: row.completed === 1,
-				created_at: row.created_at
+				due_date: row.due_date
 			})
 		}
 	})
@@ -65,7 +66,7 @@ function addTodo(plasmoid, title) {
 	var todoId = nextId++
 
 	database.transaction(function(tx) {
-		tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
+		tx.executeSql('INSERT INTO todos (id, title, completed, due_date) VALUES (?, ?, ?, ?)',
 		              [todoId, title, 0, new Date().toISOString()])
 	})
 
@@ -77,7 +78,7 @@ function addTodo(plasmoid, title, date) {
 	var todoId = nextId++
 
 	database.transaction(function(tx) {
-		tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
+		tx.executeSql('INSERT INTO todos (id, title, completed, due_date) VALUES (?, ?, ?, ?)',
 		              [todoId, title, 0, date.toISOString()])
 	})
 
@@ -89,6 +90,16 @@ function toggleTodo(plasmoid, id) {
 
 	database.transaction(function(tx) {
 		tx.executeSql('UPDATE todos SET completed = NOT completed WHERE id = ?', [id])
+	})
+
+	return true
+}
+
+function editTodo(plasmoid, id, title, date) {
+	var database = getDatabase()
+
+	database.transaction(function(tx) {
+		tx.executeSql('UPDATE todos SET title = ?, due_date = ? WHERE id = ?', [title, date, id])
 	})
 
 	return true
@@ -128,32 +139,32 @@ function loadSampleData(plasmoid) {
 
 	const sampleTodos = [
 		// Today
-		{ title: "Buy bread", completed: 0, created_at: now.toISOString() },
-		{ title: "Call the dentist", completed: 0, created_at: now.toISOString() },
-		{ title: "Finish the report", completed: 1, created_at: now.toISOString() },
-		{ title: "Reply to emails", completed: 0, created_at: now.toISOString() },
-		{ title: "Visit https://github.com/thepiou", completed: 0, created_at: now.toISOString() },
+		{ title: "Buy bread", completed: 0, due_date: now.toISOString() },
+		{ title: "Call the dentist", completed: 0, due_date: now.toISOString() },
+		{ title: "Finish the report", completed: 1, due_date: now.toISOString() },
+		{ title: "Reply to emails", completed: 0, due_date: now.toISOString() },
+		{ title: "Visit https://github.com/thepiou", completed: 0, due_date: now.toISOString() },
 
 		// Yesterday
-		{ title: "Shopping", completed: 1, created_at: yesterday.toISOString() },
-		{ title: "Pay the bills", completed: 1, created_at: yesterday.toISOString() },
-		{ title: "Clean the kitchen", completed: 0, created_at: yesterday.toISOString() },
+		{ title: "Shopping", completed: 1, due_date: yesterday.toISOString() },
+		{ title: "Pay the bills", completed: 1, due_date: yesterday.toISOString() },
+		{ title: "Clean the kitchen", completed: 0, due_date: yesterday.toISOString() },
 
 		// 2 days ago
-		{ title: "Work meeting", completed: 1, created_at: twoDaysAgo.toISOString() },
-		{ title: "Prepare presentation", completed: 1, created_at: twoDaysAgo.toISOString() },
-		{ title: "Review the budget", completed: 0, created_at: twoDaysAgo.toISOString() },
+		{ title: "Work meeting", completed: 1, due_date: twoDaysAgo.toISOString() },
+		{ title: "Prepare presentation", completed: 1, due_date: twoDaysAgo.toISOString() },
+		{ title: "Review the budget", completed: 0, due_date: twoDaysAgo.toISOString() },
 
 		// Last week
-		{ title: "Doctors appointment", completed: 1, created_at: lastWeek.toISOString() },
-		{ title: "Buy birthday gift", completed: 1, created_at: lastWeek.toISOString() },
-		{ title: "Repair bike", completed: 0, created_at: lastWeek.toISOString() }
+		{ title: "Doctors appointment", completed: 1, due_date: lastWeek.toISOString() },
+		{ title: "Buy birthday gift", completed: 1, due_date: lastWeek.toISOString() },
+		{ title: "Repair bike", completed: 0, due_date: lastWeek.toISOString() }
 	]
 
 	database.transaction(function(tx) {
 		for (var i = 0; i < sampleTodos.length; i++) {
-			tx.executeSql('INSERT INTO todos (id, title, completed, created_at) VALUES (?, ?, ?, ?)',
-			              [i + 1, sampleTodos[i].title, sampleTodos[i].completed, sampleTodos[i].created_at])
+			tx.executeSql('INSERT INTO todos (id, title, completed, due_date) VALUES (?, ?, ?, ?)',
+			              [i + 1, sampleTodos[i].title, sampleTodos[i].completed, sampleTodos[i].due_date])
 		}
 	})
 

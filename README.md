@@ -16,18 +16,14 @@ A simple and elegant task manager widget for KDE Plasma 6.
 - **Date grouping** - Tasks organized by Today, Yesterday, and older dates
 - **System integration** - Uses Plasma's native styling and colors
 
-## Screenshots
-
-<!-- Add screenshots here -->
-
 ## Installation
 
 ### Method 1: Using the install script
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/miradozk/todo-by-thepiou.git
-cd todo-by-thepiou
+git clone https://github.com/GabyShamblin/kde-plasma-todo
+cd kde-plasma-todo
 ```
 
 2. Run the installation script:
@@ -71,7 +67,7 @@ This script will:
 ### Project structure
 
 ```
-todo-by-thepiou/
+kde-plasma-todo/
 ├── plasma-widget/
 │   ├── metadata.json              # Widget metadata
 │   └── contents/
@@ -80,25 +76,27 @@ todo-by-thepiou/
 │       │   └── storage.js        # Database operations
 │       └── config/
 │           └── main.xml          # Configuration schema
-├── install-plasma-widget.sh       # Installation script
-├── dev-reload.sh                  # Development reload script
-└── README.md
+├── install-plasma-widget.sh      # Installation script
+├── dev-reload.sh                 # Development reload script
+├── README.md
+└── uninstall-plasma-widget.sh      # Uninstall script
 ```
 
 ## Usage
 
 ### Adding a task
 - Type your task in the input field
-- Press Enter or click the "Ajouter" button
+- Press Enter or click the "Add" button
 
 ### Managing tasks
 - Click the checkbox to mark a task as complete/incomplete
+- Click the edit button to change the title or date of a task
 - Click the delete (×) button to remove a task
 
 ### Filtering tasks
-- **Tout** - Show all tasks
-- **Actives** - Show only incomplete tasks
-- **Terminées** - Show only completed tasks
+- **All** - Show all tasks
+- **Active** - Show only incomplete tasks
+- **Complete** - Show only completed tasks
 
 ## Data Storage
 
@@ -111,6 +109,14 @@ All widget instances (panel and desktop) share the same database, ensuring your 
 
 ## Uninstallation
 
+### Method 1: Using the uninstall script
+```bash
+cd kde-plasma-todo
+./uninstall-plasma-widget.sh
+plasmashell --replace &
+```
+
+### Method 2: Manual uninstall
 ```bash
 kpackagetool6 --type=Plasma/Applet --remove=thepiou.plasma.todo
 plasmashell --replace &
@@ -130,9 +136,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
+## Authors
 
-**miradozk**
+**miradozk** \
+**GabyShamblin**
 
 - Project: [kde-plasma-todo](https://github.com/GabyShamblin/kde-plasma-todo)
 - Fork: [todo-by-thepiou](https://github.com/miradozk/todo-by-thepiou)
